@@ -1,3 +1,9 @@
+# File with auth keys
+tokens.py
+
+# Files in use
+*.swp
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
