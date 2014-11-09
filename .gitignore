@@ -1,5 +1,6 @@
 # File with auth keys
 tokens.py
+data
 
 # Files in use
 *.swp
