@@ -53,8 +53,13 @@ def tweet_scraper(tweet_list, outdir):
             outpath = path.join(
                 outdir, str(tweet['id']) + "_" + str(i) + ".html"
             )
+            print "Scraping {} to {}".format(url, outpath)
             
-            page_download(url, outpath)
+            try:
+                page_download(url, outpath)
+            except Exception as e:
+                print "error scraping"
+                print str(e)
 
 
 def scraper(outdir, query, n=100):
@@ -74,15 +79,21 @@ def scraper(outdir, query, n=100):
     tweet_scraper(tweets, outdir)
 
 
-def scrape_hashtag(hashtag, outdir, n=100):
+def scrape_hashtag(hashtag, outdir, n=100, since=None, until=None):
     """Scrapes n links from hashtag on twitter and places files in outdir"""
     query = "#{} filter:links".format(hashtag)
+    if since:
+        query += " since:{}".format(since)
+    if until:
+        query += " until:{}".format(until)
+
+    print 'Scraping tweets from query "{}"'.format(query)
     scraper(outdir, query, n)
 
 
 def main():
     outdir = path.join(path.curdir, "data", "Election2014")
-    scrape_hashtag("Election2014", outdir)
+    scrape_hashtag("Election2014", outdir, since="2014-11-3", until="2014-11-7")
 
 if __name__ == '__main__':
     main()
