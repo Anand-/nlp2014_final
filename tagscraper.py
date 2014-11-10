@@ -48,7 +48,9 @@ def get_tweets(query, n=100):
 
 def tweet_scraper(tweet_list, outdir):
     """Scrapes urls from a list of tweets"""
+    n = 0
     for tweet in tweet_list:
+        print "{} urls scraped".format(n)
         for i, url in enumerate(tweet['full_urls']):
             outpath = path.join(
                 outdir, str(tweet['id']) + "_" + str(i) + ".html"
@@ -57,6 +59,7 @@ def tweet_scraper(tweet_list, outdir):
             
             try:
                 page_download(url, outpath)
+                n += 1
             except Exception as e:
                 print "error scraping"
                 print str(e)
