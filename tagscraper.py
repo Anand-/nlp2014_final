@@ -26,6 +26,23 @@ def page_download(url, outpath):
     return True
 
 
+def yield_tweets(query):
+    """Searchs for tweets with query and returns info about first n"""
+    for tweet in Cursor(api.search, q=query).items():
+        # get details for each tweet
+        info = {
+            "text": tweet.text,
+            "full_urls": [u['expanded_url'] for u in tweet.entities['urls']],
+            "short_urls": [u['url'] for u in tweet.entities['urls']],
+            "retweet_count": tweet.retweet_count,
+            "created_at": tweet.created_at.isoformat(),
+            "possibly_sensitive": tweet.possibly_sensitive,
+            "id": tweet.id
+        }
+        yield info
+
+
+
 def get_tweets(query, n=100):
     """Searchs for tweets with query and returns info about first n"""
     out = []
@@ -71,7 +88,34 @@ def scraper(outdir, query, n=100):
         #check if path exists and make otherwise
         os.makedirs(outdir)
 
-    tweets = get_tweets(query, n)
+    tweets = yield_tweets(query)
+    tweet_list = []
+    urls = set()
+
+    count = 0
+
+    for tweet in tweets:
+
+        if len(tweet['full_urls']) > 0:
+            n_urls = 0
+            scraped = False
+            for u in tweet['full_urls']:
+                if not u in urls:
+                    count += 1
+                    n_urls += 1
+                    outpath = path.join(outdir, str(tweet['id'])+str(n_urls)+".html")
+                    page_download(u, outpath)
+                    scraped = True
+                    urls.add(u)
+                    print "{} scraped".format(u)
+                    print "{} urls scraped".format(count)
+
+            if scraped:
+                tweet_list.append(tweet)
+
+        if count >= n:
+            break
+
 
     # create manifest file of tweets
     manifest = open(path.join(outdir, "manifest.json"), 'w')
@@ -92,6 +136,7 @@ def scrape_hashtag(hashtag, outdir, n=100, since=None, until=None):
 
     print 'Scraping tweets from query "{}"'.format(query)
     scraper(outdir, query, n)
+
 
 
 def main():
