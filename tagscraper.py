@@ -21,7 +21,6 @@ tweepy.parsers.ModelParser
 
 def page_download(url, outpath):
     """Copies the file at url to outpath"""
-    outfile = open(outpath, 'w')
     page = requests.get(url)
     # check if url is text
     if not page.headers['content-type'].startswith("text"):
@@ -32,6 +31,7 @@ def page_download(url, outpath):
         raise Exception("Invalid status code")
 
     text = page.text.encode('utf8', 'ignore')
+    outfile = open(outpath, 'w')
     outfile.write(text)
     return True
 
