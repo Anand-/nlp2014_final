@@ -7,10 +7,12 @@ import json
 
 import requests
 import tweepy
+from tweepy import *
 
 from tokens import key, secret
-
+print key,secret
 auth = tweepy.AppAuthHandler(key, secret)
+
 api = tweepy.API(auth)
 
 Cursor = tweepy.Cursor
