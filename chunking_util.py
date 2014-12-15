@@ -77,13 +77,13 @@ def mergeTerms2Lists(shortlenlist, longerlenlist):
 
 # In[ ]:
 
-def get_best_chunks(df):
+def get_best_chunks(df, fd_start=0, fd_end=100):
     corpus_chunks = []
     for chunk in df['article_chunks']:
         corpus_chunks.extend(chunk)
 
     chunk_fd = nltk.FreqDist(corpus_chunks)
-    freqchunks = chunk_fd.keys()[:100]
+    freqchunks = chunk_fd.keys()[fd_start:fd_end]
 
     #produce chunk groups by length
     len1, len2, len3, lenMore = getPhraseLengths(freqchunks)
@@ -98,29 +98,42 @@ def get_best_chunks(df):
 
     #resulting list if we decide to merge into larger chunks
     improved_freqchunks = mergeTerms2Lists(merged2_3.keys(), new_lenMore)
-    return improved_freqchunks
+    
+    chunk_map = {}
+    for k,v in improved_freqchunks.iteritems():
+        chunk_map[k]=k
+        for val in v:
+            chunk_map[val]=k
+            
+    return chunk_map
 
 
 # In[ ]:
 
-def chunk_mapper(df, n_chunks=100):
+def chunk_mapper(df, fd_start=0, fd_end=100):
     corpus_chunks = []
     for chunk in df['article_chunks']:
         corpus_chunks.extend(chunk)
     
     chunk_fd = nltk.FreqDist(corpus_chunks)
-    freqchunks = chunk_fd.keys()[:n_chunks]
+    freqchunks = chunk_fd.keys()[fd_start:fd_end]
     
-    chunk_map={}
+    chunk_labels={}
     
     for c in freqchunks:
-        for k,v in chunk_map.items():
+        for k,v in chunk_labels.items():
             if c.lower() in k.lower() or k.lower() in c.lower():
-                chunk_map[c]=v
+                chunk_labels[c]=v
                 break
         
         if c not in chunk_map:
                 chunk_map[c]=c
+    
+    chunk_map = {}
+    for k,v in good_chunks.iteritems():
+        chunk_map[k]=k
+        for val in v:
+            chunk_map[val]=k
     
     return chunk_map
 
@@ -128,7 +141,7 @@ def chunk_mapper(df, n_chunks=100):
 # In[ ]:
 
 def apply_map(row, chunk_map):
-    return set(chunk_map[c] for c in row if c in chunk_map.keys())
+    return set(chunk_map[c.lower()] for c in row if c.lower() in chunk_map.keys())
 
 
 # In[ ]:
