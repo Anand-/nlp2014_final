@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[23]:
+# In[1]:
 
 import nltk, string
 from nltk.corpus import stopwords, brown
@@ -15,7 +15,47 @@ import pandas as pd
 from os import path
 
 
-# In[42]:
+# In[2]:
+
+def languageCheck(text):
+    fd = nltk.FreqDist(nltk.word_tokenize(text))
+    topwords = [key.lower() for key in fd.keys()[:15]]
+    
+    if "the" not in topwords:
+#         print "BAD TOPWORDS: ", topwords
+        return False
+    else:
+#         print "GOOD TOPWORDS: ", topwords
+        return True
+
+
+# In[5]:
+
+def parseImportantNps():
+    grammar = r"""
+    N-N: {<DET|CD.*>?<J*|N.*>+<N.*>} # chunk DET/Cardinal w/optional ADJ or N with proper noun
+           {<NNP.*>+<NNP.*>}             # chunk solo proper nouns only
+    """
+    cp = nltk.RegexpParser(grammar)
+    return cp, 'N-N'
+
+
+def chunk(tagged, func=parseImportantNps):
+    "Chunks tagged sents using parser returned by func"
+    chunks = []
+    leaves = []
+    cp, cn = func()
+    for i in tagged:
+        tree = cp.parse(i)
+        for subtree in tree.subtrees():
+            if subtree.node == cn:
+                leaflist = [leaf[0] for leaf in subtree.leaves()]
+                chunks.append(subtree.leaves())
+                leaves.append(' '.join(leaflist))
+    return leaves
+
+
+# In[3]:
 
 def read_files_to_list(fdir, expression='*[0-9].json'):
     """
@@ -51,10 +91,14 @@ def dict_from_path(fdir, expression="*.json"):
                 # skip if no objects or title
                 continue
             
+            article = clean_unicode(data['text'])
+            if not languageCheck(article):
+                continue
+            
             row={
                 "title":clean_unicode(data['title']),
                 "url":url,
-                "article":clean_unicode(data['text'])
+                "article":article
                 }
             out.append(row)
                 
@@ -62,7 +106,7 @@ def dict_from_path(fdir, expression="*.json"):
     return out
 
 
-# In[43]:
+# In[4]:
 
 #look for important noun phrase patterns, either nouns preceded by Det+Adj or simply compound nouns
 def parseImportantNps():
@@ -113,6 +157,7 @@ def df_from_path(fdir, expression='*[0-9].json', V=False):
         
     df=pd.DataFrame.from_dict(data)
     df.drop_duplicates(subset='title', inplace=True)
+    df.drop_duplicates(subset='article', inplace=True)
     
     if V:
         print "tokenizing"
@@ -125,6 +170,11 @@ def df_from_path(fdir, expression='*[0-9].json', V=False):
         print "tagging"
     
     df['pos_tagged_word_tokenized']=df['sent_tokenized'].map(listToTokens).map(tagTokens)
+    
+    if V:
+        print "chunking"
+    
+    df['article_chunks'] = df.pos_tagged_word_tokenized.apply(chunk)
     
     return df
 

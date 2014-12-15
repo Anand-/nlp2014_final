@@ -22,8 +22,9 @@ def get_keyphrase_columns(
     returns a data frame(index is same as indf) with a row for each document and a column for each keyphrase.
     1 if keyphrase is in document, 0 otherwise. 
     """
+    keyphrases=set(keyphrases)
     df_chunks=pd.DataFrame(index=indf.index)
-    df_chunks[keyphrase_col]=indf[read_col].apply(lambda r: set(r)&freqchunks_set).        apply(lambda r: set([c.encode('utf8', 'ignore') for c in r]))
+    df_chunks[keyphrase_col]=indf[read_col].apply(lambda r: set(r)&keyphrases).        apply(lambda r: set([c.encode('utf8', 'ignore') for c in r]))
     
     if make_keyphrase_cols:
         for i,v in enumerate(keyphrases):
