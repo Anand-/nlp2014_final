@@ -33,7 +33,6 @@ def chunk_approach(data_path, chunk_start=0, chunk_end=100, min_matches=3):
     group_data=[]
     
     for g in groups:
-        print g
         g_dict={}
         g_set=set(g)
         g_dict['keyphrases']=g_set
