@@ -1,15 +1,21 @@
 
 # coding: utf-8
 
-# In[2]:
+# In[1]:
 
 import pandas as pd
 
 
-# In[3]:
+# In[2]:
+
+def apply_map(row, chunk_map):
+    return set([chunk_map[c.lower()] for c in row if c.lower() in chunk_map])
+
+
+# In[5]:
 
 def get_keyphrase_columns(
-        keyphrases,
+        keyphrase_map,
         indf,
         keyphrase_col='common_chunks',
         read_col='article_chunks',
@@ -22,12 +28,11 @@ def get_keyphrase_columns(
     returns a data frame(index is same as indf) with a row for each document and a column for each keyphrase.
     1 if keyphrase is in document, 0 otherwise. 
     """
-    keyphrases=set(keyphrases)
     df_chunks=pd.DataFrame(index=indf.index)
-    df_chunks[keyphrase_col]=indf[read_col].apply(lambda r: set(r)&keyphrases).        apply(lambda r: set([c.encode('utf8', 'ignore') for c in r]))
+    df_chunks[keyphrase_col]=indf[read_col].apply(apply_map, chunk_map=keyphrase_map).        apply(lambda r: set([c.encode('utf8', 'ignore') for c in r]))
     
     if make_keyphrase_cols:
-        for i,v in enumerate(keyphrases):
+        for i,v in enumerate(keyphrase_map.values()):
             df_chunks[v.encode('utf8', 'ignore')]=df_chunks.common_chunks.apply(lambda r: 1 if v in r else 0)
     
     return df_chunks
@@ -35,7 +40,7 @@ def get_keyphrase_columns(
 
 # In[4]:
 
-def get_overlaps(keyphrases, indf, keyphrase_col='common_chunks', as_percent=False):
+def get_overlaps(keyphrase_map, indf, keyphrase_col='common_chunks', as_percent=False):
     """
     takes a list of keyphrases, a dataframe, and a column name where
     the rows keyphrases are kept in a list. 
@@ -46,11 +51,11 @@ def get_overlaps(keyphrases, indf, keyphrase_col='common_chunks', as_percent=Fal
     If as percent is true then the df values are the percentage of times documents
     containing the row label contain the column label. 
     """
-    df_chunks=get_keyphrase_columns(keyphrases, indf, keyphrase_col)
+    df_chunks=get_keyphrase_columns(keyphrase_map, indf, keyphrase_col)
     
     chunk_overlap = pd.DataFrame(index=df_chunks.columns[1:])
     
-    for i,v in enumerate(keyphrases):
+    for i,v in enumerate(keyphrase_map.values()):
         v = v.encode('utf8', 'ignore')
         chunk_overlap[v]=df_chunks[df_chunks[v]==1][df_chunks.columns[1:]].sum()
     
