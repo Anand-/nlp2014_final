@@ -33,10 +33,8 @@ def CreateNgramsOnTitle(articles_df):
     title_words = []
     for art in articles_df['tokenized_title2']:
         title_words.extend([word.replace(u"\u2018", "").replace(u"\u2019", "").replace(u"\u201c",'').replace(u"\u201d", '') for word in  art])
-    print len(title_words)
 
     title_words_noStop_noPunct = [word for word in title_words if word.lower() not in stopwords.words('english') and word not in string.punctuation] 
-    print len(title_words_noStop_noPunct)
 
     freqD3 = nltk.FreqDist(nltk.bigrams(title_words_noStop_noPunct))
     top_bigrams = freqD3.keys()[:50]
@@ -236,16 +234,18 @@ def ngram_approach(data_path, min_matches=3):
     df_title = CreateNgramsOnTitle(df)
     keyterms = getTrisAndNgramsForBiGrams(df_title["top_bigrams"],df_title["top_trigrams"],df_title["top_ngrams"])
     sentences = GetSentencesBasedOnTerms(df,keyterms)
-    for key in sentences.keys():
-        print key, len(sentences[key])
     keyphrases = GetFinalListOfChunks(sentences)
     keyphrase_map = {k.lower():k.lower() for k in keyphrases}
     df_overlap=grouping_util.get_overlaps(keyphrase_map, df)
     df['common_chunks']=grouping_util.get_keyphrase_columns(keyphrase_map, df, make_keyphrase_cols=False)
     groups=grouping_util.get_groups(df_overlap, doc_percents=False,set_filters=df.common_chunks, min_matches=min_matches)
     
-    group_data=[]
+    out={
+            'group_df':grouping_util.get_grouped_df(df_overlap,groups),
+            'keyphrases':keyphrase_map
+        }
     
+    group_data=[]
     for g in groups:
         g_dict={}
         g_set=set(g)
@@ -257,6 +257,8 @@ def ngram_approach(data_path, min_matches=3):
         g_dict['urls']=url_list
         
         group_data.append(g_dict)
-        
-    return group_data
+    
+    out['groups']=group_data
+    
+    return out
 

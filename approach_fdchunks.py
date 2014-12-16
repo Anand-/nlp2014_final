@@ -6,18 +6,9 @@
 from os import path
 import cPickle as pickle
 
-import nltk, string
-from nltk.corpus import stopwords
-from nltk.tokenize import RegexpTokenizer
-from nltk.collocations import *
-import codecs, os, json, glob
-from bs4 import BeautifulSoup
-from nltk.corpus import wordnet as wn
-from pandas import DataFrame
-import pandas as pd
-
 import chunking_util
 import grouping_util
+import display_util
 
 
 # In[4]:
@@ -30,8 +21,12 @@ def chunk_approach(data_path, chunk_start=0, chunk_end=100, min_matches=3):
     df['common_chunks']=grouping_util.get_keyphrase_columns(chunk_map, df, make_keyphrase_cols=False)
     groups=grouping_util.get_groups(df_overlap, doc_percents=False,set_filters=df.common_chunks, min_matches=min_matches)
     
-    group_data=[]
+    out={
+            'group_df':grouping_util.get_grouped_df(df_overlap,groups),
+            'keyphrases':chunk_map
+        }
     
+    group_data=[]
     for g in groups:
         g_dict={}
         g_set=set(g)
@@ -43,6 +38,8 @@ def chunk_approach(data_path, chunk_start=0, chunk_end=100, min_matches=3):
         g_dict['urls']=url_list
         
         group_data.append(g_dict)
-        
-    return group_data
+    
+    out['groups']=group_data
+    
+    return out
 
